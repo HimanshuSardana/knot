@@ -1,0 +1,7 @@
+# build output
+/knot
+/dist/
+
+# editor and OS noise
+.DS_Store
+*.swp
