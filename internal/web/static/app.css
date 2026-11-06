@@ -231,6 +231,9 @@
     white-space: nowrap;
   }
   thead th.num { text-align: right; width: 72px; }
+  /* table-layout: fixed takes its column widths from the header row, so the
+     widths have to live on the th, not only on the body cells. */
+  thead th.pick { width: 26px; }
 
   tbody td {
     padding: 5px 10px;
@@ -242,7 +245,7 @@
   tbody tr.sel { background: rgba(91, 157, 217, .1); }
   tbody tr.dragging { opacity: .4; }
 
-  td.pick { width: 26px; padding-right: 0; }
+  td.pick { padding-right: 0; }
   td.pick input {
     accent-color: var(--blue);
     margin: 0;
