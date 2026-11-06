@@ -141,6 +141,24 @@
     pointer-events: none;
   }
 
+  .win.dragging { opacity: .4; }
+  body.win-dragging, body.win-dragging * { cursor: grabbing !important; }
+
+  /* Drop preview shown while dragging a window over another one. */
+  #zone {
+    position: absolute;
+    pointer-events: none;
+    z-index: 15;
+    border: 1px solid var(--blue);
+    background: rgba(91, 157, 217, .14);
+    border-radius: 8px;
+    transition: left .08s, top .08s, width .08s, height .08s;
+  }
+  #zone.swap {
+    border: 1px dashed var(--tan);
+    background: rgba(217, 185, 138, .1);
+  }
+
   .win-head {
     display: flex;
     align-items: center;
@@ -150,7 +168,9 @@
     background: var(--card-2);
     flex-shrink: 0;
     min-width: 0;
+    cursor: grab;
   }
+  .win-head:active { cursor: grabbing; }
 
   .win-head select {
     background: transparent;

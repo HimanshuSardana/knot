@@ -368,6 +368,7 @@ function bindWindow(st, el) {
   const body = el.querySelector('.win-body');
 
   el.addEventListener('pointerdown', () => focusWindow(st.id));
+  el.querySelector('.win-head').addEventListener('pointerdown', (ev) => startWindowDrag(ev, st));
 
   sel.onchange = () => {
     const n = wm.nodes.find((x) => x.name === sel.value);
@@ -461,6 +462,125 @@ function nextNodeName() {
 function homeOf(name) {
   const n = wm.nodes.find((x) => x.name === name);
   return (n && n.home) || '/';
+}
+
+// ============================================================ window drag
+//
+// Dragging a window header re-tiles it. Dropping on an outer band of another
+// window splits that window on that side; dropping in the middle swaps the two.
+
+let zoneEl = null;
+
+function zoneNode() {
+  if (!zoneEl) {
+    zoneEl = document.createElement('div');
+    zoneEl.id = 'zone';
+    zoneEl.style.display = 'none';
+    workspace.appendChild(zoneEl);
+  }
+  return zoneEl;
+}
+
+function showZone(hit) {
+  const z = zoneNode();
+  if (!hit) { z.style.display = 'none'; return; }
+
+  const ws = workspace.getBoundingClientRect();
+  const r = hit.rect;
+  const x = r.left - ws.left;
+  const y = r.top - ws.top;
+  const w = r.width;
+  const h = r.height;
+
+  let zr;
+  switch (hit.side) {
+    case 'left':   zr = { x, y, w: w / 2, h }; break;
+    case 'right':  zr = { x: x + w / 2, y, w: w / 2, h }; break;
+    case 'top':    zr = { x, y, w, h: h / 2 }; break;
+    case 'bottom': zr = { x, y: y + h / 2, w, h: h / 2 }; break;
+    default:       zr = { x, y, w, h };
+  }
+
+  z.className = hit.side === 'swap' ? 'swap' : '';
+  z.style.display = 'block';
+  z.style.left = zr.x + 'px';
+  z.style.top = zr.y + 'px';
+  z.style.width = Math.max(0, zr.w) + 'px';
+  z.style.height = Math.max(0, zr.h) + 'px';
+}
+
+function hideZone() {
+  if (zoneEl) zoneEl.style.display = 'none';
+}
+
+// hitTest reports which window is under the pointer and which region of it.
+function hitTest(x, y, selfId) {
+  const under = document.elementFromPoint(x, y);
+  const win = under && under.closest('.win');
+  if (!win) return null;
+
+  const id = Number(win.dataset.id);
+  if (!id || id === selfId) return null;
+
+  const r = win.getBoundingClientRect();
+  if (!r.width || !r.height) return null;
+
+  const fx = (x - r.left) / r.width;
+  const fy = (y - r.top) / r.height;
+  const edge = 0.35;
+
+  let side;
+  if (fx < edge) side = 'left';
+  else if (fx > 1 - edge) side = 'right';
+  else if (fy < edge) side = 'top';
+  else if (fy > 1 - edge) side = 'bottom';
+  else side = 'swap';
+
+  return { targetId: id, side, rect: r };
+}
+
+function startWindowDrag(ev, st) {
+  if (ev.button !== 0) return;
+  if (ev.target.closest('button, select, input, a')) return;
+
+  const el = wm.els.get(st.id);
+  if (!el) return;
+
+  const startX = ev.clientX;
+  const startY = ev.clientY;
+  let moved = false;
+  let hit = null;
+
+  const onMove = (e) => {
+    if (!moved) {
+      if (Math.abs(e.clientX - startX) < 5 && Math.abs(e.clientY - startY) < 5) return;
+      moved = true;
+      el.classList.add('dragging');
+      document.body.classList.add('win-dragging');
+      focusWindow(st.id);
+    }
+    hit = hitTest(e.clientX, e.clientY, st.id);
+    showZone(hit);
+  };
+
+  const onUp = () => {
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    el.classList.remove('dragging');
+    document.body.classList.remove('win-dragging');
+    hideZone();
+
+    if (!moved || !hit) return;
+    if (moveWindow(st.id, hit.targetId, hit.side)) {
+      focusWindow(st.id);
+      render();
+      save();
+      setStatus(hit.side === 'swap' ? 'windows swapped' : `window moved ${hit.side}`);
+    }
+  };
+
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
 }
 
 async function refreshWindow(st) {
