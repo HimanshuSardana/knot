@@ -4,8 +4,42 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>knot</title>
+<link rel="stylesheet" href="/app.css">
 </head>
 <body>
-<p>knot is running. The browser UI is not built yet.</p>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><span class="name">knot</span></div>
+    <button class="btn" id="newWin"><span class="ico">&#xf067;</span>New window</button>
+    <button class="btn" id="resetLayout"><span class="ico">&#xf0e2;</span>Reset</button>
+    <div class="top-actions">
+      <span class="status-pill" id="tailnetLabel"></span>
+    </div>
+  </header>
+
+  <div class="workspace" id="workspace">
+    <div id="handles"></div>
+  </div>
+
+  <footer class="statusbar" id="status">
+    <span id="msg">ready</span>
+    <div class="bar" id="bar"><i></i></div>
+    <span class="hint">drag files between windows · shift-drag moves · n new · r refresh</span>
+  </footer>
+</div>
+
+<input type="file" id="file" multiple hidden>
+
+<dialog id="dlg">
+  <h3 id="dlgTitle"></h3>
+  <div id="dlgBody"></div>
+  <div class="row">
+    <button class="btn" id="dlgCancel">Cancel</button>
+    <button class="btn solid" id="dlgOk">OK</button>
+  </div>
+</dialog>
+
+<script src="/app.js" defer></script>
 </body>
 </html>
